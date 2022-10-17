@@ -1,12 +1,13 @@
 .PHONY: all clean
 
+PROGNAME = example
+SOURCES = example.c ../argparse.c
+INCLUDEDIR = ".."
+
 CC = gcc
 CFLAGS = -Wall -W -pedantic -Wall -Wno-deprecated-declarations -Wno-pointer-arith
-CFLAGS += -I..
+CFLAGS += -I$(INCLUDEDIR)
 LIBS =
-PROGNAME = out
-
-SOURCES = main.c ../argparse.c
 
 all: $(PROGNAME)
 
@@ -18,4 +19,5 @@ $(PROGNAME): $(SOURCES:.c=.o)
 
 clean:
 	rm -f *.o
-	rm $(PROGNAME)
+	rm -f $(INCLUDEDIR)/*.o
+	rm -f $(PROGNAME)

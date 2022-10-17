@@ -11,9 +11,13 @@ void
 argparse_usage(t_argparse_options *opt)
 {
   int i;
-  
+  char sf1;
+  char sf2;
+  const char *a;
+  const char *lf;
+  int maxl;
   // max length long flag
-  int maxl = 0;
+  maxl = 0;
   for (i=0; opt[i].type != ARGPARSE_T_END; i++)
     {
       if (opt[i].type != ARGPARSE_T_INFO)
@@ -23,7 +27,6 @@ argparse_usage(t_argparse_options *opt)
 	    maxl = l;
 	}
     }
-
   // print all
   for (i=0; opt[i].type != ARGPARSE_T_END; i++)
     {
@@ -34,8 +37,6 @@ argparse_usage(t_argparse_options *opt)
       else
 	{
 	  // skip short
-	  char sf1;
-	  char sf2;
 	  if (opt[i].short_flag == '-')
 	    {
 	      sf1 = ' ';
@@ -47,7 +48,6 @@ argparse_usage(t_argparse_options *opt)
 	      sf2 = opt[i].short_flag;
 	    }
 	  // skip long
-	  const char *lf;
 	  if (opt[i].long_flag[2] == '-')
 	    {
 	      lf = " ";
@@ -56,54 +56,23 @@ argparse_usage(t_argparse_options *opt)
 	    {
 	      lf = opt[i].long_flag;
 	    }
-	  printf("%c%c %-*s   %s\n",
+	  // arg
+	  if (opt[i].type == ARGPARSE_T_BOOL)
+	    {
+	      a = "     ";
+	    }
+	  else // ARGPARSE_T_STR ARGPARSE_T_DEF
+	    {
+	      a = "<arg>";
+	    }
+	  printf("%c%c %-*s %s   %s\n",
 		 sf1,sf2,
 		 maxl,
 		 lf,
+		 a,
 		 opt[i].desc);
 	}
     }
-}
-
-int
-argparse_split_to_char(const char *s, char *v)
-{
-  int i,j, count;
-  char buf[ARGPARSE_MAX_STR_LEN];
-  for (i=0, j=0, count=0; s[i]!='\0'; i++)
-    {
-      if (s[i] == ',')
-	{
-	  if (j != 0)
-	    {
-	      buf[j] = '\0';
-	      strcpy(&v[count*ARGPARSE_MAX_STR_LEN], buf);
-	      count++;
-	      j=0;
-	      if (count == ARGPARSE_MAX_ARG)
-		{
-		  return(count);
-		}
-	    }
-	}
-      else
-	{
-	  // max len - 1
-	  if (j < ARGPARSE_MAX_STR_LEN-1)
-	    {
-	      buf[j] = s[i];
-	      j++;
-	    }
-	}
-    }
-  // last
-  if (j != 0)
-    {
-      buf[j] = '\0';
-      strcpy(&v[count*ARGPARSE_MAX_STR_LEN], buf);
-      count++;
-    }
-  return(count);
 }
 
 int
@@ -112,9 +81,17 @@ argparse_parse(t_argparse_options *opt, int argc, char *argv[])
   int a, i, j, l;
   const char *arg;
   int find;
-  int seq[ARGPARSE_MAX_ARG];
-  int count;
-
+  int def;
+  int current;
+  // find default
+  def = -1;
+  for (i=0; opt[i].type != ARGPARSE_T_END; i++)
+    {
+      if (opt[i].type == ARGPARSE_T_DEF)
+	{
+	  def = i;
+	}
+    }
   // disable all
   for (i=0; opt[i].type != ARGPARSE_T_END; i++)
     {
@@ -123,30 +100,38 @@ argparse_parse(t_argparse_options *opt, int argc, char *argv[])
 	  *opt[i].a = 0;
 	}
     }
-
   a = 1;
- next:
+  current = def;
   while (a < argc) 
     {
       arg = argv[a];
       l = strlen(arg);
-      count = 0;
-
       // long flag ?
       if (l >= 3 &&
 	  arg[0] == '-' &&
 	  arg[1] == '-' &&
-	  arg[2] != '-' &&
-	  arg[2] != '\0')
+	  arg[2] != '-')
 	{
+	  // find
 	  find = 0;
 	  for (i=0; opt[i].type != ARGPARSE_T_END; i++)
 	    {
-	      if (opt[i].type != ARGPARSE_T_INFO && !strcmp(arg, opt[i].long_flag))
+	      if ((opt[i].type == ARGPARSE_T_BOOL ||
+		   opt[i].type == ARGPARSE_T_STR) && 
+		  !strcmp(arg, opt[i].long_flag))
 		{
 		  find = 1;
-		  seq[count] = i;
-		  count++;
+		  // if bool set
+		  if (opt[i].type == ARGPARSE_T_BOOL)
+		    {
+		      *opt[i].a += 1;
+		      current = def;
+		    }
+		  else
+		    {
+		      current = i;
+		    }
+		  break;
 		}
 	    }
 	  if (find == 0)
@@ -155,27 +140,39 @@ argparse_parse(t_argparse_options *opt, int argc, char *argv[])
 	      return(1);
 	    }
 	}
-
-      //short flag ?
-      else if (arg[0] == '-' &&
-	       arg[1] != '-' &&
-	       arg[1] != '\0')
+      // short flag ?
+      else if (l >= 2 &&
+	       arg[0] == '-' &&
+	       arg[1] != '-')
 	{
 	  for (j=1; arg[j] != '\0'; j++)
 	    {
+	      // skip
 	      if (arg[j] == '-')
 		{
 		  ARGPARSE_ERROR("error: not familar flag: %c\n", arg[j]);
 		  return(1);
 		}
+	      // find
 	      find = 0;
 	      for (i=0; opt[i].type != ARGPARSE_T_END; i++)
 		{
-		  if (opt[i].type != ARGPARSE_T_INFO && opt[i].short_flag == arg[j])
+		  if ((opt[i].type == ARGPARSE_T_BOOL ||
+		       opt[i].type == ARGPARSE_T_STR) && 
+		      opt[i].short_flag == arg[j])
 		    {
 		      find = 1;
-		      seq[count] = i;
-		      count++;
+		      // if bool set
+		      if (opt[i].type == ARGPARSE_T_BOOL)
+			{
+			  *opt[i].a += 1;
+			  current = def;
+			}
+		      else
+			{
+			  current = i;
+			}
+		      break;
 		    }
 		}
 	      if (find == 0)
@@ -185,64 +182,23 @@ argparse_parse(t_argparse_options *opt, int argc, char *argv[])
 		}
 	    }
 	}
-      else
+      // is this a flag ?
+      else if (l >= 1 &&
+	       arg[0] == '-')
 	{
-	  ARGPARSE_ERROR("error: it should be flag: %s\n", arg);
+	  ARGPARSE_ERROR("error: not familar flag: %s\n", arg);
 	  return(1);
 	}
-
-      // parse seq
-      for (i=0; i<count; i++)
+      // if not flag - set current
+      else
 	{
-	  switch (opt[seq[i]].type)
+	  if (current >= 0)
 	    {
-
-	    case ARGPARSE_T_B:
-	      *opt[seq[i]].a = 1;
-	      break;
-
-
-	    case ARGPARSE_T_O:
-	      if (a == argc-1)
-		{
-		  ARGPARSE_ERROR("error: need argument for: %s\n", arg);
-		  return(1);
-		}
-	      else
-		{
-		  char *v = (char *)opt[seq[i]].v;
-		  a++;
-		  strncpy(v, argv[a],ARGPARSE_MAX_STR_LEN-1);
-		  *opt[seq[i]].a = 1;
-		  a++;
-		  goto next;
-		}
-	      break;
-
-
-	    case ARGPARSE_T_M:
-	      if (a == argc-1)
-		{
-		  ARGPARSE_ERROR("error: need argument for: %s\n", arg);
-		  return(1);
-		}
-	      else
-		{
-		  char *v = (char *)opt[seq[i]].v;
-		  a++;
-		  *opt[seq[i]].a = argparse_split_to_char(argv[a], v);
-		  a++;
-		  goto next;
-		}
-	      break;
-
-
-	    default:
-	      break;
+	      opt[current].v[*opt[current].a] = arg;
+	      *opt[current].a += 1;
 	    }
 	}
       a++;
-      goto next;
     }
   return (0);
 }
