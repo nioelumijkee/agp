@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 #
 
+import random
 from subprocess import PIPE, Popen
 
 opt_default = []
@@ -67,6 +68,18 @@ def parse_options():
 def test_options():
     print('-'*80)
     print("test options.")
+    
+    for i in range(100):
+        n = random.randint(0, 32)
+        a = []
+        for j in range(n):
+            c = random.randint(0, 100) > 50 # chanse 50%
+            # if c:
+            #     a.append(
+
+
+
+
 
 def test_arguments():
     print('-'*80)

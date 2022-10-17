@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 PROGNAME = example
-SOURCES = example.c ../argparse.c
+SOURCES = example.c ../agp.c
 INCLUDEDIR = ".."
 
 CC = gcc
