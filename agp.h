@@ -17,22 +17,26 @@ enum agp_type {
   AGP_T_END,
 };
 
-#define AGP_INFO(DESC)          {AGP_T_INFO, "--",   NULL,    NULL, NULL, DESC}
-#define AGP_BOOL(SH,LN,A,DESC)  {AGP_T_BOOL, "-"#SH, "--"#LN, A,    NULL, DESC}
-#define AGP_STR(SH,LN,A,V,DESC) {AGP_T_STR,  "-"#SH, "--"#LN, A,    V,    DESC}
-#define AGP_DEF(SH,LN,A,V,DESC) {AGP_T_DEF,  "-"#SH, "--"#LN, A,    V,    DESC}
-#define AGP_END()               {AGP_T_END,  "--",   NULL,    NULL, NULL, NULL}
+#define AGP_INFO(DESC)          {AGP_T_INFO, "--",   NULL,    NULL, DESC}
+#define AGP_BOOL(SH,LN,V,DESC)  {AGP_T_BOOL, "-"#SH, "--"#LN, V,    DESC}
+#define AGP_STR(SH,LN,V,DESC)   {AGP_T_STR,  "-"#SH, "--"#LN, V,    DESC}
+#define AGP_DEF(SH,LN,V,DESC)   {AGP_T_DEF,  "-"#SH, "--"#LN, V,    DESC}
+#define AGP_END()               {AGP_T_END,  "--",   NULL,    NULL, NULL}
 
-#define AGP_ERROR(S,B) { fprintf(stderr,S,B); }
+#define AGP_ERROR(S,B) { fprintf(stderr,S,B); return(1); }
 
-#define AGP_MAX_ARG 64
+#define AGP_MAX_ARG 32
+
+typedef struct _agp_val {
+  int         count;
+  const char *a[AGP_MAX_ARG];
+} t_agp_val;
 
 typedef struct _agp_options {
-  const char type;
+  const char  type;
   const char *short_flag;
   const char *long_flag;
-  int  *a;
-  const char **v;
+  t_agp_val  *v;
   const char *desc;
 } t_agp_options;
 

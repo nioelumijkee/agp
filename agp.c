@@ -61,7 +61,9 @@ agp_usage(t_agp_options *opt)
 int
 agp_parse(t_agp_options *opt, int argc, char *argv[])
 {
-  int a, i, j, l;
+  int i, j;
+  int arg_len;
+  int arg_num;
   int find;
   int def;
   int current;
@@ -82,40 +84,39 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
   for (i=0; opt[i].type != AGP_T_END; i++)
     {
       if (opt[i].type != AGP_T_INFO)
-	*opt[i].a = 0;
+	opt[i].v->count = 0;
     }
   // main cycle
   need_arg = 0;
-  a = 1;
+  arg_num = 1;
   current = def;
-  while (a < argc || need_arg) 
+  last_flag = opt[def].desc;
+  while (arg_num < argc || need_arg) 
     {
       // test end arguments
-      if (need_arg && a == argc)
-	{
-	  AGP_ERROR("error: end. need argument for: %s\n", last_flag);
-	  return(1);
-	}
-      arg = argv[a];
-      l = strlen(arg);
+      if (need_arg && arg_num == argc)
+	AGP_ERROR("error: end. need argument for: %s\n", last_flag);
+      arg = argv[arg_num];
+      arg_len = strlen(arg);
+      if (arg_len == 0)
+	AGP_ERROR("error: length argument zero: %s\n", argv[arg_num]);
       // need argument
       if (need_arg)
 	{
 	  // is this a flag ?
 	  if (arg[0] == '-')
-	    {
-	      AGP_ERROR("error: need argument for: %s\n", last_flag);
-	      return(1);
-	    }
-	  opt[current].v[*opt[current].a] = arg;
-	  *opt[current].a += 1;
+	    AGP_ERROR("error: need argument for: %s\n", last_flag);
+	  if (opt[current].v->count == AGP_MAX_ARG)
+	    AGP_ERROR("error: max arguments for: %s\n", last_flag);
+	  opt[current].v->a[opt[current].v->count] = arg;
+	  opt[current].v->count++;
 	  need_arg = 0;
 	}
       // long flag ?
-      else if (l >= 3 &&
-	  arg[0] == '-' &&
-	  arg[1] == '-' &&
-	  arg[2] != '-')
+      else if (arg_len >= 3 &&
+	       arg[0] == '-' &&
+	       arg[1] == '-' &&
+	       arg[2] != '-')
 	{
 	  // find
 	  find = 0;
@@ -128,7 +129,7 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 		  find = 1;
 		  if (opt[i].type == AGP_T_BOOL)
 		    {
-		      *opt[i].a += 1;
+		      opt[i].v->count++;
 		      current = def;
 		    }
 		  else
@@ -141,13 +142,10 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 		}
 	    }
 	  if (find == 0)
-	    {
-	      AGP_ERROR("error: not familar flag: %s\n", arg);
-	      return(1);
-	    }
+	    AGP_ERROR("error: not familar flag: %s\n", arg);
 	}
       // short flag ?
-      else if (l >= 2 &&
+      else if (arg_len >= 2 &&
 	       arg[0] == '-' &&
 	       arg[1] != '-')
 	{
@@ -155,10 +153,7 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 	    {
 	      // skip
 	      if (arg[j] == '-')
-		{
-		  AGP_ERROR("error: not familar flag: %c\n", arg[j]);
-		  return(1);
-		}
+		AGP_ERROR("error: not familar flag: %c\n", arg[j]);
 	      // find
 	      find = 0;
 	      for (i=0; opt[i].type != AGP_T_END; i++)
@@ -170,17 +165,14 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 		      find = 1;
 		      if (opt[i].type == AGP_T_BOOL)
 			{
-			  *opt[i].a += 1;
+			  opt[i].v->count++;
 			  current = def;
 			}
 		      else
 			{
 			  // end ?
-			  if (j!=l-1)
-			    {
-			      AGP_ERROR("error: need argument after: %c\n", arg[j]);
-			      return(1);
-			    }
+			  if (j != arg_len-1)
+			    AGP_ERROR("error: need argument after: %c\n", arg[j]);
 			  need_arg = 1;
 			  current = i;
 			  last_flag = arg;
@@ -189,10 +181,7 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 		    }
 		}
 	      if (find == 0)
-		{
-		  AGP_ERROR("error: not familar flag: %c\n", arg[j]);
-		  return(1);
-		}
+		AGP_ERROR("error: not familar flag: %c\n", arg[j]);
 	    }
 	}
       // more
@@ -200,15 +189,14 @@ agp_parse(t_agp_options *opt, int argc, char *argv[])
 	{
 	  // is this a flag ?
 	  if (arg[0] == '-')
-	    {
-	      AGP_ERROR("error: not familar flag: %s\n", arg);
-	      return(1);
-	    }
+	    AGP_ERROR("error: not familar flag: %s\n", arg);
 	  // if not flag - set current
-	  opt[current].v[*opt[current].a] = arg;
-	  *opt[current].a += 1;
+	  if (opt[current].v->count == AGP_MAX_ARG)
+	    AGP_ERROR("error: max arguments for: %s\n", last_flag);
+	  opt[current].v->a[opt[current].v->count] = arg;
+	  opt[current].v->count++;
 	}
-      a++;
+      arg_num++;
     }
   return (0);
 }

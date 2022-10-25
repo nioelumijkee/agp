@@ -3,89 +3,95 @@
 
 import random
 from subprocess import PIPE, Popen
+import time
 
-opt_default = []
-opt_bool_short = []
-opt_bool_long = []
-opt_str_short = []
-opt_str_long = []
+flags           = {'a':0,
+                   'b':0,
+                   'c':0,
+                   'd':[],
+                   'e':[],
+                   'f':[]}
+opt_default     = {'d':'d'}
+opt_bool_short  = {'a':'a',
+                   'b':'b'}
+opt_bool_long   = {'a':'--bool-a',
+                   'c':'--bool-c'}
+opt_str_short   = {'d':'d',
+                   'e':'e'}
+opt_str_long    = {'d':'--str-d',
+                   'f':'--str-f'}
 
-def parse_options():
-    print('-'*80)
-    print("parse options.")
+max_arg = 32
 
-    cmd = "./example --help"
+def run_proc(cmd):
     p = Popen(cmd, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = p.communicate()
+    answer = {}
     if stderr:
-        print("error test: parse_options")
-        print (stderr.decode())
-        exit(0)
-    s = stdout.decode().split('\n')
-    opt = []
-    for i in s:
-        i = i.split()
-        if len(i) > 1:
-            if (i[0] == '<arg>'):
-                flag = i[-1].replace('(','').replace(')','')
-                opt_default = [' ', flag]
-            elif (i[-1][0] == '('):
-                opt.append(i)
-    opt_bool = []
-    opt_str = []
-    for i in opt:
-        flag = ''
-        flag = i[-1].replace('(','').replace(')','')
-        # str
-        if "<arg>" in i:
-            b = []
-            for j in i:
-                if len(j) == 2 and j[0] == '-':
-                    opt_str_short.append([j[1], flag])
-                elif j[0] == '-':
-                    opt_str_long.append([j, flag])
-        # bool
-        else:
-            b = []
-            for j in i:
-                if len(j) == 2 and j[0] == '-':
-                    opt_bool_short.append([j[1], flag])
-                elif j[0] == '-':
-                    opt_bool_long.append([j, flag])
-
-    print("default option:")
-    print(opt_default)
-    print("options bool short:")
-    for i in opt_bool_short: print(i)
-    print("options bool long:")
-    for i in opt_bool_long: print(i)
-    print("options str short:")
-    for i in opt_str_short: print(i)
-    print("options str long:")
-    for i in opt_str_long: print(i)
+        err = True
+    else:
+        err = False
+        s = stdout.decode().strip().split('\n')
+        for i in s:
+            i = i.strip().split(':')
+            flag = i[0]
+            try:
+                if flag == 'd' or flag == 'e' or flag == 'f':
+                    strings = []
+                    for j in i[2:]:
+                        strings.append(j.strip())
+                    answer[flag] = strings
+                else:
+                    count = int(i[1].strip())
+                    answer[flag] = count
+            except:
+                print('*'*80)
+                print('\nerror parse out:')
+                print('*'*80)
+                print(cmd)
+                print('*'*80)
+                print(s)
+                exit()
+    return(err, answer, stderr)
 
 
-def test_options():
-    print('-'*80)
-    print("test options.")
-    
-    for i in range(100):
-        n = random.randint(0, 32)
-        a = []
-        for j in range(n):
-            c = random.randint(0, 100) > 50 # chanse 50%
-            # if c:
-            #     a.append(
+def random_string(l):
+    alph = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_+='
+    # error symbols: $#()[]{}&-*
+    s = ''
+    for i in range(l):
+        s = s + alph[random.randint(0,len(alph)-1)]
+    return(s)
 
 
+def test_default():
+    print("test default option.")
+    amount_tests = 1000
+    for t in range(amount_tests):
+        args_amount = random.randint(0,max_arg)
+        args = []
+        for a in range(args_amount):
+            rs = random_string(random.randint(1,1000))
+            args.append(rs)
+        s = './example ' + ' '.join(args)
+        err, answer, stderr = run_proc(s)
 
+        # test
+        if err:
+            print("\nerror")
+            print(stderr)
+            print(s, '->', answer)
+            exit()
 
+        if args != answer['d']:
+            print("\nerror")
+            print(s, '->', args,'->', answer['d'])
+            exit()
 
-def test_arguments():
-    print('-'*80)
-    print("test arguments.")
+        print('.',end='',flush=True)
+        time.sleep(0.001)
+    print()
+
 
 if __name__ == '__main__':
-    parse_options()
-    test_options()
-    test_arguments()
+    test_default()
