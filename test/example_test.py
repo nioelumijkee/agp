@@ -4,21 +4,21 @@
 import random
 from subprocess import PIPE, Popen
 
-flags           = {'a':0,
-                   'b':0,
-                   'c':0,
-                   'd':[],
-                   'e':[],
-                   'f':[]}
-opt_default     = {'d':'d'}
-opt_bool_short  = {'a':'a',
-                   'b':'b'}
-opt_bool_long   = {'a':'--bool-a',
-                   'c':'--bool-c'}
-opt_str_short   = {'d':'d',
-                   'e':'e'}
-opt_str_long    = {'d':'--str-d',
-                   'f':'--str-f'}
+# flags           = {'a':0,
+#                    'b':0,
+#                    'c':0,
+#                    'd':[],
+#                    'e':[],
+#                    'f':[]}
+# opt_default     = {'d':'d'}
+# opt_bool_short  = {'a':'a',
+#                    'b':'b'}
+# opt_bool_long   = {'a':'--bool-a',
+#                    'c':'--bool-c'}
+# opt_str_short   = {'d':'d',
+#                    'e':'e'}
+# opt_str_long    = {'d':'--str-d',
+#                    'f':'--str-f'}
 
 max_arg = 32
 
@@ -178,7 +178,7 @@ def test_bool_short(amount_tests):
 
 
 if __name__ == '__main__':
-    amount_tests = 1000
+    amount_tests = 10
     test_default(amount_tests)
     test_default_with_flag(amount_tests)
     test_bool_short(amount_tests)

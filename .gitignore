@@ -1,2 +1,3 @@
 *.o
-test/example
+test/
+example/example
