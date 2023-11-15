@@ -48,7 +48,7 @@ agp_usage(t_agp_options *opt)
 	    a = "     ";
 	  else // AGP_T_STR AGP_T_DEF
 	    a = "<arg>";
-	  printf("%s %-*s %s   %s\n",
+	  printf("  %s %-*s %s   %s\n",
 		 sf,
 		 maxl,
 		 lf,

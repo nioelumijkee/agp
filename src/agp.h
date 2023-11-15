@@ -25,7 +25,7 @@ enum agp_type {
 
 #define AGP_ERROR(S,B) { fprintf(stderr,S,B); return(1); }
 
-#define AGP_MAX_ARG 32
+#define AGP_MAX_ARG 64
 
 typedef struct _agp_val {
   int         count;

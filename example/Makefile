@@ -1,8 +1,8 @@
 .PHONY: all clean
 
 PROGNAME = example
-SOURCES = example.c ../agp.c
-INCLUDEDIR = ".."
+SOURCES = example.c ../src/agp.c
+INCLUDEDIR = "../src"
 
 CC = gcc
 CFLAGS = -Wall -W -pedantic -Wall -Wno-deprecated-declarations -Wno-pointer-arith
